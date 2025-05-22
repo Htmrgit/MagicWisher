@@ -1,0 +1,1005 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>MagicWisher - Personalized Wish Message Generator</title>
+  <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <style id="app-style">
+    body {
+      font-family: 'Poppins', sans-serif;
+      background: linear-gradient(135deg, #fdf8f3 0%, #f8e5de 100%);
+      min-height: 100vh;
+      padding-bottom: 60px;
+    }
+    
+    .dark-mode {
+      background: #121212;
+      color: #e0e0e0;
+    }
+    .dark-mode .app-container {
+      background: #1e1e1e;
+      box-shadow: 0 10px 25px rgba(0, 0, 0, 0.7);
+    }
+    .dark-mode .app-header {
+      background: #2c2c2c;
+    }
+    .dark-mode .form-input {
+      background: #2c2c2c;
+      border-color: #444;
+      color: #e0e0e0;
+    }
+    .dark-mode .btn-primary {
+      background: #3a3a3a;
+    }
+    .dark-mode .wish-card {
+      background: #2a2a2a;
+      box-shadow: 0 5px 15px rgba(0, 0, 0, 0.7);
+    }
+    .dark-mode .bottom-nav {
+      background: #1f1f1f;
+    }
+    .dark-mode .footer {
+      background: #1e1e1e;
+      color: #bbb;
+    }
+    
+    .app-container {
+      max-width: 600px;
+      margin: 0 auto;
+      box-shadow: 0 10px 25px rgba(0, 0, 0, 0.05);
+      border-radius: 16px;
+      overflow: hidden;
+    }
+    
+    .app-header {
+      background: linear-gradient(135deg, #ff9a9e 0%, #fad0c4 100%);
+      color: white;
+    }
+    
+    .form-input {
+      transition: all 0.3s ease;
+      border-radius: 8px;
+    }
+    
+    .form-input:focus {
+      border-color: #ff9a9e;
+      box-shadow: 0 0 0 3px rgba(255, 154, 158, 0.2);
+    }
+    
+    .btn-primary {
+      background: linear-gradient(135deg, #ff9a9e 0%, #fad0c4 100%);
+      transition: transform 0.3s ease, box-shadow 0.3s ease;
+    }
+    
+    .btn-primary:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(255, 154, 158, 0.3);
+    }
+    
+    .wish-card {
+      transition: all 0.3s ease;
+      border-radius: 12px;
+      background: white;
+      box-shadow: 0 5px 15px rgba(0, 0, 0, 0.05);
+    }
+    
+    .wish-card:hover {
+      transform: translateY(-5px);
+      box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
+    }
+    
+    .action-button {
+      transition: all 0.2s ease;
+    }
+    
+    .action-button:hover {
+      background-color: #f8f9fa;
+      transform: scale(1.1);
+    }
+    
+    .saved {
+      color: #28a745;
+    }
+    
+    .loader {
+      border-top-color: #ff9a9e;
+      animation: spinner 0.8s linear infinite;
+    }
+    
+    @keyframes spinner {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+    
+    .fade-in {
+      animation: fadeIn 0.5s ease-in-out;
+    }
+    
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(10px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    
+    .past-messages-header {
+      cursor: pointer;
+      user-select: none;
+    }
+    
+    .past-messages-container {
+      max-height: 0;
+      overflow: hidden;
+      transition: max-height 0.3s ease;
+    }
+    
+    .past-messages-container.open {
+      max-height: 300px;
+      overflow-y: auto;
+    }
+    
+    /* Bottom Navigation Bar */
+    .bottom-nav {
+      position: fixed;
+      bottom: 0; left: 0; right: 0;
+      height: 60px;
+      background: white;
+      box-shadow: 0 -2px 10px rgba(0,0,0,0.05);
+      display: flex;
+      justify-content: space-around;
+      align-items: center;
+      z-index: 50;
+    }
+    .bottom-nav button {
+      flex: 1;
+      text-align: center;
+      padding: 8px 0;
+      font-size: 12px;
+      color: #888;
+      transition: color 0.3s, transform 0.2s;
+      position: relative;
+      overflow: hidden;
+    }
+    .bottom-nav button.active {
+      color: #ff9a9e;
+    }
+    .bottom-nav button:active {
+      transform: scale(0.95);
+    }
+    /* ripple effect */
+    .ripple {
+      position: absolute;
+      border-radius: 50%;
+      background: rgba(0,0,0,0.1);
+      transform: scale(0);
+      animation: ripple 0.6s linear;
+      pointer-events: none;
+    }
+    @keyframes ripple {
+      to { transform: scale(4); opacity: 0; }
+    }
+
+    /* Slide animations */
+    .view { transition: transform 0.4s ease, opacity 0.4s ease; }
+    .view.hidden { opacity: 0; transform: translateY(20px); pointer-events: none; }
+
+    /* Reminder Pop-up Overlay */
+    .reminder-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background-color: rgba(0, 0, 0, 0.5);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      z-index: 9999;
+    }
+    .reminder-overlay .overlay {
+      background-color: white;
+      border-radius: 12px;
+      padding: 2rem;
+      max-width: 300px;
+      text-align: center;
+    }
+    .reminder-overlay .overlay p {
+      margin-bottom: 1rem;
+      font-size: 1rem;
+    }
+    .reminder-overlay .overlay .buttons {
+      display: flex;
+      justify-content: center;
+      gap: 1rem;
+    }
+    .reminder-overlay .overlay .buttons button {
+      padding: 0.5rem 1rem;
+      border-radius: 8px;
+      font-size: 1rem;
+    }
+    .reminder-overlay .overlay .buttons button.btn-primary {
+      background-color: #ff9a9e;
+      color: white;
+    }
+  </style>
+</head>
+<body class="py-6 px-4">
+  <div class="app-container bg-white fade-in">
+    <!-- App Header -->
+    <div class="app-header py-5 px-6 text-center relative">
+      <h1 class="text-3xl font-bold inline-block">
+        <i class="fas fa-magic mr-2"></i>MagicWisher
+      </h1>
+      <!-- 1) Dark mode toggle button -->
+      <button id="dark-mode-toggle"
+              class="absolute top-4 right-4 text-white bg-gray-800 dark-toggle p-2 rounded focus:outline-none"
+              title="Toggle Dark Mode">
+        <i class="fas fa-moon"></i>
+      </button>
+      <p class="mt-2 text-white opacity-90">Create beautiful personalized wishes</p>
+    </div>
+    
+    <!-- Form Section -->
+    <div id="form-section" class="p-6">
+      <div class="mb-4">
+        <label for="sender-name" class="block text-sm font-medium text-gray-700 mb-1">Sender Name (Optional)</label>
+        <input type="text" id="sender-name" class="form-input w-full px-4 py-2 border border-gray-300 focus:outline-none" placeholder="Your name">
+      </div>
+      
+      <div class="mb-4">
+        <label for="receiver-name" class="block text-sm font-medium text-gray-700 mb-1">Receiver Name <span class="text-red-500">*</span></label>
+        <input type="text" id="receiver-name" class="form-input w-full px-4 py-2 border border-gray-300 focus:outline-none" placeholder="Their name" required>
+      </div>
+      
+      <div class="mb-4">
+        <label for="relation" class="block text-sm font-medium text-gray-700 mb-1">Relation</label>
+        <select id="relation" class="form-input w-full px-4 py-2 border border-gray-300 focus:outline-none appearance-none bg-white">
+          <option value="">Select Relation</option>
+          <option value="Friend">Friend</option>
+          <option value="Best Friend">Best Friend</option>
+          <option value="Brother">Brother</option>
+          <option value="Sister">Sister</option>
+          <option value="Mother">Mother</option>
+          <option value="Father">Father</option>
+          <option value="Husband">Husband</option>
+          <option value="Wife">Wife</option>
+          <option value="Boss">Boss</option>
+          <option value="Colleague">Colleague</option>
+          <option value="Partner">Partner</option>
+          <option value="Teacher">Teacher</option>
+          <option value="Student">Student</option>
+          <option value="Other">Other</option>
+        </select>
+      </div>
+      
+      <div class="mb-4">
+        <label for="occasion" class="block text-sm font-medium text-gray-700 mb-1">Occasion</label>
+        <select id="occasion" class="form-input w-full px-4 py-2 border border-gray-300 focus:outline-none appearance-none bg-white">
+          <option value="">Select Occasion</option>
+          <option value="Birthday">Birthday</option>
+          <option value="Anniversary">Anniversary</option>
+          <option value="Wedding">Wedding</option>
+          <option value="Graduation">Graduation</option>
+          <option value="Job Promotion">Job Promotion</option>
+          <option value="New Baby">New Baby</option>
+          <option value="Get Well Soon">Get Well Soon</option>
+          <option value="Thank You">Thank You</option>
+          <option value="Congratulations">Congratulations</option>
+          <option value="Festival">Festival</option>
+          <option value="New Year">New Year</option>
+          <option value="Other">Other</option>
+        </select>
+      </div>
+      
+      <div id="other-occasion-container" class="mb-4 hidden">
+        <label for="other-occasion" class="block text-sm font-medium text-gray-700 mb-1">Specify Occasion</label>
+        <input type="text" id="other-occasion" class="form-input w-full px-4 py-2 border border-gray-300 focus:outline-none" placeholder="Enter occasion">
+      </div>
+      
+      <div class="mb-6">
+        <label for="emotion" class="block text-sm font-medium text-gray-700 mb-1">Emotion</label>
+        <select id="emotion" class="form-input w-full px-4 py-2 border border-gray-300 focus:outline-none appearance-none bg-white">
+          <option value="">Select Emotion</option>
+          <option value="Emotional">Emotional</option>
+          <option value="Funny">Funny</option>
+          <option value="Romantic">Romantic</option>
+          <option value="Formal">Formal</option>
+          <option value="Friendly">Friendly</option>
+          <option value="Inspirational">Inspirational</option>
+        </select>
+      </div>
+      
+      <button id="generate-btn" class="btn-primary w-full py-3 px-4 text-white font-medium rounded-lg focus:outline-none">
+        Generate Wishes <i class="fas fa-wand-magic-sparkles ml-2"></i>
+      </button>
+      
+      <div id="error-message" class="mt-3 text-red-500 text-center hidden"></div>
+    </div>
+    
+    <!-- Loading Section -->
+    <div id="loading-section" class="p-6 text-center hidden">
+      <div class="loader mx-auto h-12 w-12 border-4 border-gray-200 rounded-full"></div>
+      <p class="mt-4 text-gray-600">Crafting your personalized wishes...</p>
+    </div>
+    
+    <!-- Results Section -->
+    <div id="results-section" class="p-6 hidden">
+      <h2 class="text-xl font-semibold mb-4">Your Personalized Wishes</h2>
+      
+      <div id="wish-cards-container" class="space-y-4">
+        <!-- Wish cards will be dynamically generated here -->
+      </div>
+      
+      <button id="start-over-btn" class="mt-6 w-full py-3 px-4 bg-gray-100 text-gray-700 font-medium rounded-lg hover:bg-gray-200 focus:outline-none transition duration-200">
+        <i class="fas fa-redo mr-2"></i> Start Over
+      </button>
+    </div>
+    
+    <!-- Past Messages Section -->
+    <div class="border-t border-gray-200 mt-2">
+      <div id="past-messages-header" class="past-messages-header p-4 flex justify-between items-center">
+        <div class="flex items-center">
+          <i class="fas fa-history mr-2 text-gray-600"></i>
+          <h3 class="font-medium">Past Saved Messages</h3>
+        </div>
+        <i id="toggle-icon" class="fas fa-chevron-down text-gray-600"></i>
+      </div>
+      
+      <div id="past-messages-container" class="past-messages-container px-4 pb-4">
+        <div id="no-saved-messages" class="text-center py-4 text-gray-500">
+          No saved messages yet
+        </div>
+        <ul id="saved-messages-list" class="space-y-3">
+          <!-- Saved messages will be dynamically added here -->
+        </ul>
+      </div>
+    </div>
+    
+    <!-- Scheduled Messages Section -->
+    <div id="scheduled-section" class="p-6 hidden view">
+      <div class="flex justify-between items-center mb-4">
+        <h2 class="text-xl font-semibold">Scheduled Messages</h2>
+        <button id="toggle-calendar" class="btn-primary py-1 px-3 text-sm rounded">
+          <i class="fas fa-th-list"></i> Calendar View
+        </button>
+      </div>
+
+      <!-- List & Calendar -->
+      <ul id="scheduled-list" class="space-y-3">
+        <!-- JS will populate list items -->
+      </ul>
+      <!-- Calendar View Container (hidden by default) -->
+      <div id="scheduled-calendar" class="hidden">
+        <!-- placeholder for a simple calendar grid -->
+      </div>
+    </div>
+  </div>
+  
+  <!-- ============================
+    2) Bottom Navigation Bar HTML
+  ============================ -->
+  <div class="bottom-nav">
+    <button id="nav-home" class="active">
+      <i class="fas fa-home fa-lg"></i><br>Home
+    </button>
+    <button id="nav-saved">
+      <i class="fas fa-bookmark fa-lg"></i><br>Saved
+    </button>
+    <button id="nav-past">
+      <i class="fas fa-history fa-lg"></i><br>Past
+    </button>
+    <button id="nav-scheduled">
+      <i class="fas fa-calendar-alt fa-lg"></i><br>Scheduled
+      <span id="sched-badge" class="absolute top-0 right-3 inline-flex items-center justify-center
+                             px-2 py-1 text-xs font-bold leading-none text-white bg-red-500
+                             rounded-full hidden">0</span>
+    </button>
+  </div>
+  
+  <footer class="text-center mt-10 text-gray-500 text-sm">
+    <p>© 2025 MagicWisher - Develop By Thakur Mano Rajput</p>
+  </footer>
+  
+  <!-- Reminder Pop-up Overlay -->
+  <div id="reminder-overlay" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+    <div class="bg-white rounded-lg shadow-lg p-6 max-w-sm text-center">
+      <p id="reminder-text" class="mb-4 text-gray-800">
+        <!-- JS will insert the reminder text here -->
+      </p>
+      <div class="flex justify-center space-x-4">
+        <button id="reminder-dismiss" class="px-4 py-2 bg-gray-200 rounded hover:bg-gray-300">
+          Dismiss
+        </button>
+        <button id="reminder-ok" class="px-4 py-2 btn-primary text-white rounded hover:opacity-90">
+          Ready to Send
+        </button>
+      </div>
+    </div>
+  </div>
+  
+  <!-- Scheduling Overlay -->
+  <div id="schedule-overlay" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+    <div class="bg-white rounded-lg shadow-lg p-6 max-w-sm w-full">
+      <h3 class="text-lg font-semibold mb-4">Schedule this wish</h3>
+      <p id="schedule-modal-message" class="mb-4 text-gray-800"></p>
+      <label class="block text-sm font-medium text-gray-700">Recipient Mobile</label>
+      <input type="tel" id="schedule-overlay-phone" class="form-input w-full mb-4"
+             placeholder="+1234567890" />
+      <label class="block text-sm font-medium text-gray-700">Select Date & Time</label>
+      <input type="datetime-local" id="schedule-overlay-datetime" class="form-input w-full mb-6" />
+      <div class="flex justify-end space-x-2">
+        <button id="schedule-overlay-cancel" class="px-4 py-2 bg-gray-200 rounded">Cancel</button>
+        <button id="schedule-overlay-confirm" class="px-4 py-2 btn-primary text-white rounded">
+          Schedule & Send
+        </button>
+      </div>
+    </div>
+  </div>
+  
+  <script id="app-script">
+    // --- ADDITION: Dark mode toggle logic (early initialization)
+    const darkModeToggle = document.getElementById('dark-mode-toggle');
+    if (darkModeToggle) {
+      darkModeToggle.addEventListener('click', () => {
+        document.body.classList.toggle('dark-mode');
+        // switch icon from moon ⇄ sun
+        const icon = darkModeToggle.querySelector('i');
+        if (document.body.classList.contains('dark-mode')) {
+          icon.classList.remove('fa-moon');
+          icon.classList.add('fa-sun');
+        } else {
+          icon.classList.remove('fa-sun');
+          icon.classList.add('fa-moon');
+        }
+      });
+    }
+
+    // DOM Elements
+    const formSection = document.getElementById('form-section');
+    const loadingSection = document.getElementById('loading-section');
+    const resultsSection = document.getElementById('results-section');
+    const generateBtn = document.getElementById('generate-btn');
+    const startOverBtn = document.getElementById('start-over-btn');
+    const errorMessage = document.getElementById('error-message');
+    const wishCardsContainer = document.getElementById('wish-cards-container');
+    const pastMessagesHeader = document.getElementById('past-messages-header');
+    const pastMessagesContainer = document.getElementById('past-messages-container');
+    const toggleIcon = document.getElementById('toggle-icon');
+    const noSavedMessages = document.getElementById('no-saved-messages');
+    const savedMessagesList = document.getElementById('saved-messages-list');
+    const occasionSelect = document.getElementById('occasion');
+    const otherOccasionContainer = document.getElementById('other-occasion-container');
+    const navHome = document.getElementById('nav-home');
+    const navSaved = document.getElementById('nav-saved');
+    const navPast = document.getElementById('nav-past');
+    const navScheduled = document.getElementById('nav-scheduled');
+    const scheduledSection = document.getElementById('scheduled-section');
+    const scheduledList = document.getElementById('scheduled-list');
+    const scheduledCal = document.getElementById('scheduled-calendar');
+    const toggleCalendarBtn = document.getElementById('toggle-calendar');
+    const reminderOverlay = document.getElementById('reminder-overlay');
+    const reminderText = document.getElementById('reminder-text');
+    const reminderOkBtn = document.getElementById('reminder-ok');
+    const reminderDismiss = document.getElementById('reminder-dismiss');
+    const schedBadge = document.getElementById('sched-badge');
+
+    // Form inputs
+    const senderNameInput = document.getElementById('sender-name');
+    const receiverNameInput = document.getElementById('receiver-name');
+    const relationSelect = document.getElementById('relation');
+    const emotionSelect = document.getElementById('emotion');
+    const otherOccasionInput = document.getElementById('other-occasion');
+    const schedulePhoneInput = document.getElementById('schedule-phone');
+    const scheduleDatetimeInput = document.getElementById('schedule-datetime');
+    const scheduleBtn = document.getElementById('schedule-btn');
+    
+    // Show/hide other occasion input based on selection
+    occasionSelect.addEventListener('change', () => {
+      if (occasionSelect.value === 'Other') {
+        otherOccasionContainer.classList.remove('hidden');
+      } else {
+        otherOccasionContainer.classList.add('hidden');
+      }
+    });
+    
+    // Toggle past messages section
+    pastMessagesHeader.addEventListener('click', () => {
+      pastMessagesContainer.classList.toggle('open');
+      toggleIcon.classList.toggle('fa-chevron-down');
+      toggleIcon.classList.toggle('fa-chevron-up');
+    });
+    
+    // Generate wishes button click handler
+    generateBtn.addEventListener('click', () => {
+      // Form validation
+      if (!receiverNameInput.value.trim()) {
+        errorMessage.textContent = 'Please enter the receiver name';
+        errorMessage.classList.remove('hidden');
+        return;
+      }
+      
+      if (!relationSelect.value) {
+        errorMessage.textContent = 'Please select a relation';
+        errorMessage.classList.remove('hidden');
+        return;
+      }
+      
+      if (!occasionSelect.value) {
+        errorMessage.textContent = 'Please select an occasion';
+        errorMessage.classList.remove('hidden');
+        return;
+      }
+      
+      if (occasionSelect.value === 'Other' && !otherOccasionInput.value.trim()) {
+        errorMessage.textContent = 'Please specify the occasion';
+        errorMessage.classList.remove('hidden');
+        return;
+      }
+      
+      if (!emotionSelect.value) {
+        errorMessage.textContent = 'Please select an emotion';
+        errorMessage.classList.remove('hidden');
+        return;
+      }
+      
+      // Hide error message if validation passes
+      errorMessage.classList.add('hidden');
+      
+      // Show loading section
+      formSection.classList.add('hidden');
+      loadingSection.classList.remove('hidden');
+      
+      // Get form data
+      const formData = {
+        senderName: senderNameInput.value.trim(),
+        receiverName: receiverNameInput.value.trim(),
+        relation: relationSelect.value,
+        occasion: occasionSelect.value === 'Other' ? otherOccasionInput.value.trim() : occasionSelect.value,
+        emotion: emotionSelect.value
+      };
+      
+      // Simulate API call to generate wishes
+      setTimeout(() => {
+        generateWishes(formData);
+      }, 2000);
+    });
+    
+    // Start over button click handler
+    startOverBtn.addEventListener('click', () => {
+      // Reset form
+      senderNameInput.value = '';
+      receiverNameInput.value = '';
+      relationSelect.value = '';
+      occasionSelect.value = '';
+      emotionSelect.value = '';
+      otherOccasionInput.value = '';
+      otherOccasionContainer.classList.add('hidden');
+      
+      // Show form section
+      resultsSection.classList.add('hidden');
+      formSection.classList.remove('hidden');
+    });
+    
+    // Function to generate wishes
+    async function generateWishes(formData) {
+      // Hide loading, show results
+      loadingSection.classList.add('hidden');
+      resultsSection.classList.remove('hidden');
+      wishCardsContainer.innerHTML = '';
+      
+      try {
+        // 1) Call the WishGenerator Loop
+        const loopResponse = await fetch(
+          'https://magicloops.dev/api/loop/66b60377-6f84-439d-bcc7-ccddb2156829/run',
+          {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(formData)
+          }
+        );
+        const { messages } = await loopResponse.json(); // { messages: [...] }
+        
+        // 2) Render each message as a card
+        messages.forEach((wish, index) => {
+          const wishCard = document.createElement('div');
+          wishCard.className = 'wish-card p-4 fade-in';
+          wishCard.style.animationDelay = `${index * 0.1}s`;
+          
+          const wishContent = document.createElement('p');
+          wishContent.className = 'text-gray-700 mb-4';
+          wishContent.textContent = wish;
+          
+          const actionButtons = document.createElement('div');
+          actionButtons.className = 'flex justify-end space-x-2';
+          
+          // Copy button
+          const copyButton = createActionButton('fa-copy', 'Copy');
+          copyButton.addEventListener('click', () => {
+            navigator.clipboard.writeText(wish).then(() => {
+              // Show copied feedback
+              copyButton.querySelector('span').textContent = 'Copied!';
+              setTimeout(() => {
+                copyButton.querySelector('span').textContent = 'Copy';
+              }, 2000);
+            });
+          });
+          
+          // Save button
+          const saveButton = createActionButton('fa-bookmark', 'Save');
+          saveButton.addEventListener('click', () => {
+            const savedMessages = JSON.parse(localStorage.getItem('savedMessages') || '[]');
+            
+            // Check if already saved
+            const alreadySaved = savedMessages.includes(wish);
+            
+            if (alreadySaved) {
+              // Remove from saved
+              const updatedMessages = savedMessages.filter(message => message !== wish);
+              localStorage.setItem('savedMessages', JSON.stringify(updatedMessages));
+              saveButton.querySelector('i').classList.remove('saved');
+              saveButton.querySelector('span').textContent = 'Save';
+            } else {
+              // Add to saved
+              savedMessages.push(wish);
+              localStorage.setItem('savedMessages', JSON.stringify(savedMessages));
+              saveButton.querySelector('i').classList.add('saved');
+              saveButton.querySelector('span').textContent = 'Saved';
+            }
+            
+            // Update saved messages list
+            updateSavedMessagesList();
+          });
+          
+          // Share button
+          const shareButton = createActionButton('fa-share-alt', 'Share');
+          shareButton.addEventListener('click', () => {
+            if (navigator.share) {
+              navigator.share({
+                title: 'Message from MagicWisher',
+                text: wish
+              }).catch(console.error);
+            } else {
+              alert('Web Share API not supported in your browser');
+            }
+          });
+          
+          // Schedule button
+          const scheduleButton = createActionButton('fa-calendar-alt', 'Schedule');
+          scheduleButton.addEventListener('click', () => {
+            // populate overlay message and show
+            const modalMsg = document.getElementById('schedule-modal-message');
+            if (modalMsg && scheduleOverlay) {
+              modalMsg.textContent = wish;
+              scheduleConfirmBtn.dataset.wishText = wish;
+              scheduleOverlay.classList.remove('hidden');
+            }
+          });
+          
+          actionButtons.appendChild(copyButton);
+          actionButtons.appendChild(saveButton);
+          actionButtons.appendChild(shareButton);
+          actionButtons.appendChild(scheduleButton);
+          
+          wishCard.appendChild(wishContent);
+          wishCard.appendChild(actionButtons);
+          
+          wishCardsContainer.appendChild(wishCard);
+        });
+      } catch (err) {
+        console.error(err);
+        errorMessage.textContent = 'Something went wrong. Please try again.';
+        errorMessage.classList.remove('hidden');
+      }
+    }
+    
+    // Helper function to create action button
+    function createActionButton(iconClass, text) {
+      const button = document.createElement('button');
+      button.className = 'action-button flex items-center justify-center rounded-full w-8 h-8 focus:outline-none';
+      
+      const icon = document.createElement('i');
+      icon.className = `fas ${iconClass}`;
+      
+      const tooltip = document.createElement('span');
+      tooltip.className = 'sr-only';
+      tooltip.textContent = text;
+      
+      button.appendChild(icon);
+      button.appendChild(tooltip);
+      
+      return button;
+    }
+    
+    // Function to update saved messages list
+    function updateSavedMessagesList() {
+      const savedMessages = JSON.parse(localStorage.getItem('savedMessages') || '[]');
+      
+      // Show/hide no saved messages message
+      if (savedMessages.length === 0) {
+        noSavedMessages.classList.remove('hidden');
+        savedMessagesList.classList.add('hidden');
+      } else {
+        noSavedMessages.classList.add('hidden');
+        savedMessagesList.classList.remove('hidden');
+        
+        // Clear and repopulate saved messages list
+        savedMessagesList.innerHTML = '';
+        
+        savedMessages.forEach(message => {
+          const listItem = document.createElement('li');
+          listItem.className = 'bg-gray-50 p-3 rounded-lg relative';
+          
+          const messageText = document.createElement('p');
+          messageText.className = 'text-gray-700 pr-8';
+          messageText.textContent = message;
+          
+          const deleteButton = document.createElement('button');
+          deleteButton.className = 'absolute top-2 right-2 text-gray-400 hover:text-gray-600 focus:outline-none';
+          deleteButton.innerHTML = '<i class="fas fa-trash-alt"></i>';
+          deleteButton.addEventListener('click', () => {
+            // Remove message from localStorage
+            const updatedMessages = savedMessages.filter(m => m !== message);
+            localStorage.setItem('savedMessages', JSON.stringify(updatedMessages));
+            
+            // Update UI
+            updateSavedMessagesList();
+          });
+          
+          listItem.appendChild(messageText);
+          listItem.appendChild(deleteButton);
+          savedMessagesList.appendChild(listItem);
+        });
+      }
+    }
+    
+    // Initialize saved messages list on page load
+    updateSavedMessagesList();
+    
+    // Calendar/List toggle
+    toggleCalendarBtn.addEventListener('click', () => {
+      const inCal = !scheduledCal.classList.contains('hidden');
+      scheduledCal.classList.toggle('hidden', inCal);
+      scheduledList.classList.toggle('hidden', !inCal);
+      toggleCalendarBtn.innerHTML = inCal
+        ? '<i class="fas fa-th-list"></i> Calendar View'
+        : '<i class="fas fa-list"></i> List View';
+    });
+    
+    // UTILITY: ripple effect on any button
+    function attachRipple(btn) {
+      btn.addEventListener('click', e => {
+        const circle = document.createElement('span');
+        circle.className = 'ripple';
+        const rect = btn.getBoundingClientRect();
+        const size = Math.max(rect.width, rect.height);
+        circle.style.width = circle.style.height = size + 'px';
+        circle.style.left = (e.clientX - rect.left - size/2) + 'px';
+        circle.style.top  = (e.clientY - rect.top - size/2) + 'px';
+        btn.appendChild(circle);
+        setTimeout(() => circle.remove(), 600);
+      });
+    }
+    // attach ripple to primary buttons
+    [generateBtn, startOverBtn, ...document.querySelectorAll('.action-button'), navHome, navSaved, navPast, navScheduled]
+      .forEach(attachRipple);
+    
+    // NAVIGATION HANDLERS
+    function clearActiveNav() {
+      [navHome, navSaved, navPast, navScheduled].forEach(b => b.classList.remove('active'));
+    }
+    function showView(viewId) {
+      ['form-section','results-section','past-messages-container','scheduled-section']
+        .forEach(id => {
+          document.getElementById(id).classList.toggle('hidden', id !== viewId);
+        });
+    }
+    navHome.addEventListener('click', () => {
+      clearActiveNav(); navHome.classList.add('active');
+      showView('form-section');
+    });
+    navSaved.addEventListener('click', () => {
+      clearActiveNav(); navSaved.classList.add('active');
+      updateSavedMessagesList();
+      showView('past-messages-container');
+    });
+    navPast.addEventListener('click', () => {
+      clearActiveNav(); navPast.classList.add('active');
+      pastMessagesContainer.classList.add('open');
+      showView('past-messages-container');
+    });
+    navScheduled.addEventListener('click', () => {
+      clearActiveNav(); navScheduled.classList.add('active');
+      // fetch or render scheduled messages here…
+      showView('scheduled-section');
+    });
+    
+    // ENHANCE existing transitions by toggling .view and .hidden
+    [formSection, loadingSection, resultsSection, pastMessagesContainer, scheduledSection].forEach(s => {
+      s.classList.add('view');
+    });
+    
+    // 1) Add storage for scheduled messages with their datetime and text
+    let scheduledMessages = JSON.parse(localStorage.getItem('scheduledMessagesList')||'[]');
+    
+    // 3) Function to check for any message due in exactly 5 minutes
+    function checkReminders() {
+      const now = new Date();
+      scheduledMessages.forEach((msg, idx) => {
+        const sendTime = new Date(msg.time);
+        const diffMins = (sendTime - now) / 60000;
+        if (diffMins > 4.9 && diffMins < 5.1 && !msg.reminded) {
+          // mark reminded so we don't show twice
+          scheduledMessages[idx].reminded = true;
+          localStorage.setItem('scheduledMessagesList', JSON.stringify(scheduledMessages));
+          
+          // increment in-app notification count & show badge
+          pendingNotifications += 1;
+          updateBadge();
+
+          // populate friendly overlay text
+          reminderText.textContent =
+            "Hey there! Your message \"" + msg.text +
+            "\" will be sent in 5 minutes. Ready to click send?";
+          reminderOverlay.classList.remove('hidden');
+        }
+      });
+    }
+    
+    // 4) Dismiss handler just hides pop-up
+    if (reminderDismiss) {
+      reminderDismiss.addEventListener('click', () => {
+        reminderOverlay.classList.add('hidden');
+        pendingNotifications = Math.max(0, pendingNotifications - 1);
+        updateBadge();
+      });
+    }
+    
+    // 5) Ok handler opens WhatsApp Web with pre-filled message
+    if (reminderOkBtn) {
+      reminderOkBtn.addEventListener('click', () => {
+        reminderOverlay.classList.add('hidden');
+        // for simplicity assume one at a time—find first un-sent in 5 min window
+        const nextMsg = scheduledMessages.find(m => m.reminded && !m.sent);
+        if (nextMsg) {
+          // mark sent
+          nextMsg.sent = true;
+          localStorage.setItem('scheduledMessagesList', JSON.stringify(scheduledMessages));
+          // open WhatsApp Web
+          const url = 'https://web.whatsapp.com/send?text=' 
+                    + encodeURIComponent(nextMsg.text);
+          window.open(url, '_blank');
+        }
+        // clear all pending notifications (user acted)
+        pendingNotifications = 0;
+        updateBadge();
+      });
+    }
+    
+    // 6) Kick off the reminder check every minute
+    setInterval(checkReminders, 60 * 1000);
+    
+    // 7) When scheduling a new message (your existing scheduling code), 
+    //    push into scheduledMessages with time, text, and flags:
+    //
+    //    scheduledMessages.push({
+    //      time: scheduledTimeISOString,
+    //      text:    '…the wish text…',
+    //      reminded: false,
+    //      sent:     false
+    //    });
+    //    localStorage.setItem('scheduledMessagesList', JSON.stringify(scheduledMessages));
+    //
+    // … rest of existing JS …
+
+    // Schedule Overlay Handlers
+    const scheduleOverlay   = document.getElementById('schedule-overlay');
+    const schedulePhoneOv   = document.getElementById('schedule-overlay-phone');
+    const scheduleDateOv    = document.getElementById('schedule-overlay-datetime');
+    const scheduleConfirmBtn= document.getElementById('schedule-overlay-confirm');
+    const scheduleCancelBtn = document.getElementById('schedule-overlay-cancel');
+    
+    // Cancel just hides the overlay
+    if (scheduleCancelBtn) {
+      scheduleCancelBtn.addEventListener('click', () => {
+        scheduleOverlay.classList.add('hidden');
+      });
+    }
+    
+    // Confirm scheduling: push into scheduledMessages + localStorage
+    if (scheduleConfirmBtn) {
+      scheduleConfirmBtn.addEventListener('click', () => {
+        const phone = schedulePhoneOv.value.trim();
+        const time  = scheduleDateOv.value;
+        const text  = scheduleConfirmBtn.dataset.wishText;
+        if (!phone || !time) {
+          alert('Please enter phone and date/time');
+          return;
+        }
+        scheduledMessages.push({
+          text,
+          phone,
+          time,
+          reminded: false,
+          sent: false
+        });
+        localStorage.setItem('scheduledMessagesList', JSON.stringify(scheduledMessages));
+        
+        // --- NEW: after scheduling, refresh the Scheduled Messages list UI
+        updateScheduledMessagesUI();
+
+        // Clear and hide
+        schedulePhoneOv.value = '';
+        scheduleDateOv.value  = '';
+        scheduleOverlay.classList.add('hidden');
+        alert('Wish scheduled successfully!');
+      });
+    }
+
+    // --- NEW: render Scheduled Messages into the #scheduled-list UL
+    function updateScheduledMessagesUI() {
+      // ensure we have latest from storage
+      scheduledMessages = JSON.parse(localStorage.getItem('scheduledMessagesList') || '[]');
+
+      const container = document.getElementById('scheduled-list');
+      container.innerHTML = ''; // clear
+
+      if (scheduledMessages.length === 0) {
+        container.innerHTML = '<li class="text-gray-500">No scheduled messages</li>';
+        return;
+      }
+
+      scheduledMessages.forEach((msg, idx) => {
+        const li = document.createElement('li');
+        li.className = 'bg-white p-4 rounded shadow flex justify-between items-start';
+
+        // Left: details
+        const details = document.createElement('div');
+        details.innerHTML = `
+          <p class="font-semibold mb-1">${msg.text}</p>
+          <p class="text-sm text-gray-600">To: ${msg.phone}</p>
+          <p class="text-sm text-gray-600">At: ${new Date(msg.time).toLocaleString()}</p>
+        `;
+
+        // Right: edit / delete buttons
+        const actions = document.createElement('div');
+        actions.className = 'space-x-2';
+
+        const editBtn = document.createElement('button');
+        editBtn.className = 'action-button text-blue-500';
+        editBtn.innerHTML = '<i class="fas fa-edit"></i>';
+        editBtn.addEventListener('click', () => {
+          // populate overlay again for editing
+          document.getElementById('schedule-modal-message').textContent = msg.text;
+          scheduleOverlay.classList.remove('hidden');
+          scheduleOverlay.dataset.editIndex = idx;
+        });
+
+        const delBtn = document.createElement('button');
+        delBtn.className = 'action-button text-red-500';
+        delBtn.innerHTML = '<i class="fas fa-trash-alt"></i>';
+        delBtn.addEventListener('click', () => {
+          scheduledMessages.splice(idx,1);
+          localStorage.setItem('scheduledMessagesList', JSON.stringify(scheduledMessages));
+          updateScheduledMessagesUI();
+        });
+
+        actions.append(editBtn, delBtn);
+
+        li.append(details, actions);
+        container.appendChild(li);
+      });
+    }
+
+    // --- MODIFIED: when opening the Scheduled tab, refresh UI
+    navScheduled.addEventListener('click', () => {
+      clearActiveNav(); navScheduled.classList.add('active');
+      updateScheduledMessagesUI();      // <-- ensure list is current
+      showView('scheduled-section');
+    });
+
+    // --- OPTIONAL: if you want initial load to populate it
+    updateScheduledMessagesUI();
+  </script>
+</body>
+</html>
