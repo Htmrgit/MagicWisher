@@ -397,8 +397,8 @@
     </button>
   </div>
   
-  <footer class="text-center mt-10 text-gray-500 text-sm">
-    <p>© 2025 MagicWisher - Develop By Thakur Mano Rajput</p>
+  <footer class="text-center mt-6 text-gray-500 text-sm">
+    <p>© 2025 MagicWisher - Create beautiful personalized wishes</p>
   </footer>
   
   <!-- Reminder Pop-up Overlay -->
@@ -434,6 +434,37 @@
           Schedule & Send
         </button>
       </div>
+    </div>
+  </div>
+  
+  <!-- LANGUAGE SELECTION MODAL (ADD) -->
+  <div id="language-modal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center hidden z-50">
+    <div class="bg-white rounded-lg p-6 w-11/12 max-w-sm text-center">
+      <h3 class="text-lg font-semibold mb-4">Choose Wish Language</h3>
+      <div class="space-y-3 mb-6">
+        <label class="flex items-center space-x-2">
+          <input type="radio" name="modal-language" value="English" class="form-radio"/>
+          <span>English</span>
+        </label>
+        <label class="flex items-center space-x-2">
+          <input type="radio" name="modal-language" value="Hindi" class="form-radio"/>
+          <span>Hindi</span>
+        </label>
+        <label class="flex items-center space-x-2">
+          <input type="radio" name="modal-language" value="Sanskrit" class="form-radio"/>
+          <span>Sanskrit</span>
+        </label>
+      </div>
+      <button id="modal-confirm-btn"
+              class="btn-primary px-4 py-2 text-white rounded-lg w-full mb-3">
+        Confirm
+      </button>
+
+      <!-- ADDITION: New generate-in-selected-language button -->
+      <button id="modal-generate-language-btn"
+              class="w-full py-2 px-4 border border-pink-500 text-pink-500 rounded-lg hover:bg-pink-50 transition">
+        Generate in Selected Language
+      </button>
     </div>
   </div>
   
@@ -483,6 +514,9 @@
     const reminderOkBtn = document.getElementById('reminder-ok');
     const reminderDismiss = document.getElementById('reminder-dismiss');
     const schedBadge = document.getElementById('sched-badge');
+    const languageModal = document.getElementById('language-modal');
+    const modalConfirmBtn = document.getElementById('modal-confirm-btn');
+    const modalGenerateLangBtn = document.getElementById('modal-generate-language-btn');
 
     // Form inputs
     const senderNameInput = document.getElementById('sender-name');
@@ -493,6 +527,7 @@
     const schedulePhoneInput = document.getElementById('schedule-phone');
     const scheduleDatetimeInput = document.getElementById('schedule-datetime');
     const scheduleBtn = document.getElementById('schedule-btn');
+    const languageSelect = document.getElementById('language');
     
     // Show/hide other occasion input based on selection
     occasionSelect.addEventListener('change', () => {
@@ -511,60 +546,87 @@
     });
     
     // Generate wishes button click handler
-    generateBtn.addEventListener('click', () => {
-      // Form validation
+    generateBtn.replaceWith( generateBtn.cloneNode(true) );
+    const newGenerateBtn = document.getElementById('generate-btn');
+    newGenerateBtn.addEventListener('click', () => {
+      // Check if all required fields are blank and alert the user
+      if (!receiverNameInput.value.trim() &&
+          !relationSelect.value &&
+          !occasionSelect.value &&
+          !emotionSelect.value) {
+        alert("Please fill in the required fields before generating wishes.");
+        return;
+      }
+      // Validate each required field individually
       if (!receiverNameInput.value.trim()) {
         errorMessage.textContent = 'Please enter the receiver name';
         errorMessage.classList.remove('hidden');
         return;
       }
-      
       if (!relationSelect.value) {
         errorMessage.textContent = 'Please select a relation';
         errorMessage.classList.remove('hidden');
         return;
       }
-      
       if (!occasionSelect.value) {
         errorMessage.textContent = 'Please select an occasion';
         errorMessage.classList.remove('hidden');
         return;
       }
-      
       if (occasionSelect.value === 'Other' && !otherOccasionInput.value.trim()) {
         errorMessage.textContent = 'Please specify the occasion';
         errorMessage.classList.remove('hidden');
         return;
       }
-      
       if (!emotionSelect.value) {
         errorMessage.textContent = 'Please select an emotion';
         errorMessage.classList.remove('hidden');
         return;
       }
-      
-      // Hide error message if validation passes
+
+      // Hide previous error message
       errorMessage.classList.add('hidden');
-      
-      // Show loading section
-      formSection.classList.add('hidden');
-      loadingSection.classList.remove('hidden');
-      
-      // Get form data
-      const formData = {
-        senderName: senderNameInput.value.trim(),
-        receiverName: receiverNameInput.value.trim(),
+
+      // BUILD formData from inputs (except language, which is set later)
+      formData = {
+        sender: senderNameInput.value.trim() || undefined,
+        receiver: receiverNameInput.value.trim(),
         relation: relationSelect.value,
-        occasion: occasionSelect.value === 'Other' ? otherOccasionInput.value.trim() : occasionSelect.value,
+        occasion: occasionSelect.value === 'Other'
+                  ? otherOccasionInput.value.trim()
+                  : occasionSelect.value,
         emotion: emotionSelect.value
       };
-      
-      // Simulate API call to generate wishes
-      setTimeout(() => {
-        generateWishes(formData);
-      }, 2000);
+
+      // Show language-selection modal
+      languageModal.classList.remove('hidden');
     });
-    
+
+    // Modal confirm button – capture selected language and continue:
+    modalConfirmBtn.addEventListener('click', () => {
+      const selected = document.querySelector('input[name="modal-language"]:checked');
+      if (!selected) {
+        alert('Please choose a language');
+        return;
+      }
+
+      // ADD language into the formData
+      formData.language = selected.value;
+
+      // Hide modal, then hide form and show loader
+      languageModal.classList.add('hidden');
+      formSection.classList.add('hidden');
+      loadingSection.classList.remove('hidden');
+
+      // PASS built formData into generateWishes
+      setTimeout(() => generateWishes(formData), 2000);
+    });
+
+    // Modal generate in selected language button
+    modalGenerateLangBtn.addEventListener('click', () => {
+      modalConfirmBtn.click(); // reuse existing confirm logic
+    });
+
     // Start over button click handler
     startOverBtn.addEventListener('click', () => {
       // Reset form
@@ -575,6 +637,7 @@
       emotionSelect.value = '';
       otherOccasionInput.value = '';
       otherOccasionContainer.classList.add('hidden');
+      languageSelect.value = '';
       
       // Show form section
       resultsSection.classList.add('hidden');
